@@ -13,15 +13,13 @@ import ${package.Service}.${table.serviceName};
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 
 /**
- * <p>
- * ${table.comment!} 前端控制器
- * </p>
- *
- * @author ${author}
- */
+* @description ${table.comment!}
+* @date ${date}
+* @author ${author}
+*/
 @Slf4j
 <#if restControllerStyle>
 @RestController
@@ -38,7 +36,7 @@ public class ${table.controllerName} extends ${superControllerClass} {
 public class ${table.controllerName} {
 </#if>
 
-    @Autowired
+    @Resource
     private ${table.serviceName}  ${table.serviceName?uncap_first};
 }
 </#if>

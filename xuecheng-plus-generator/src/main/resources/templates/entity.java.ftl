@@ -4,8 +4,8 @@ package ${package.Entity};
 import ${pkg};
 </#list>
 <#if swagger2>
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger2.annotations.ApiModel;
+import io.swagger2.annotations.ApiModelProperty;
 </#if>
 <#if entityLombokModel>
 import lombok.Data;
@@ -13,10 +13,8 @@ import lombok.Data;
 import com.baomidou.mybatisplus.annotation.TableName;
 
 /**
- * <p>
- * ${table.comment!}
- * </p>
- *
+ * @description ${table.comment!}
+ * @date ${date}
  * @author ${author}
  */
 <#if entityLombokModel>

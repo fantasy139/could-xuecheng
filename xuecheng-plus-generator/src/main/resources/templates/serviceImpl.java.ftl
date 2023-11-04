@@ -10,12 +10,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * <p>
- * ${table.comment!} 服务实现类
- * </p>
- *
- * @author ${author}
- */
+* @description ${table.comment!} 服务实现类
+* @date ${date}
+* @author ${author}
+*/
 @Slf4j
 @Service
 <#if kotlin>

@@ -6,12 +6,10 @@ import org.springframework.stereotype.Repository;
 
 
 /**
- * <p>
- * ${table.comment!} Mapper 接口
- * </p>
- *
- * @author ${author}
- */
+* @description ${table.comment!} mapper 接口
+* @date ${date}
+* @author ${author}
+*/
 <#if kotlin>
 interface ${table.mapperName} : ${superMapperClass}<${entity}>
 <#else>
