@@ -2,6 +2,7 @@ package com.xuecheng.content.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.api.R;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xuecheng.base.execption.CommonError;
@@ -11,6 +12,7 @@ import com.xuecheng.base.model.PageResult;
 import com.xuecheng.content.mapper.CourseBaseMapper;
 import com.xuecheng.content.model.dto.AddCourseDto;
 import com.xuecheng.content.model.dto.CourseBaseInfoDto;
+import com.xuecheng.content.model.dto.EditCourseDto;
 import com.xuecheng.content.model.dto.QueryCourseParamsDto;
 import com.xuecheng.content.model.po.CourseBase;
 import com.xuecheng.content.model.po.CourseCategory;
@@ -80,7 +82,7 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
         CourseMarket courseMarket = new CourseMarket();
         BeanUtils.copyProperties(addCourseDto,courseMarket);
         courseMarket.setId(courseBase.getId());
-        saveCourseMarket(courseMarket);
+        saveOrUpdateCourseMarket(courseMarket);
         //从数据库中查询出详细信息并返回
         CourseBaseInfoDto courseBaseInfoDto = getCourseBaseInfo(courseBase.getId());
         if (courseBaseInfoDto == null){
@@ -88,8 +90,8 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
         }
         return courseBaseInfoDto;
     }
-
-    private CourseBaseInfoDto getCourseBaseInfo(long courseId){
+    @Override
+    public CourseBaseInfoDto getCourseBaseInfo(Long courseId){
         CourseBaseInfoDto courseBaseInfoDto = new CourseBaseInfoDto();
         CourseBase courseBase = getById(courseId);
         if (courseBase == null){
@@ -107,6 +109,50 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
         return courseBaseInfoDto;
     }
 
+    @Override
+    public CourseBaseInfoDto updateCourse(Long companyId, EditCourseDto editCourseDto) {
+        //校验
+        CourseBase courseBase = getCourseBase(companyId,editCourseDto.getId());
+
+        CourseMarket courseMarket = new CourseMarket();
+        BeanUtils.copyProperties(editCourseDto,courseBase);
+        BeanUtils.copyProperties(editCourseDto,courseMarket);
+        courseBase.setCreateDate(LocalDateTime.now());
+        updateById(courseBase);
+        saveOrUpdateCourseMarket(courseMarket);
+        //从数据库中查询出详细信息并返回
+        CourseBaseInfoDto courseBaseInfoDto = getCourseBaseInfo(courseBase.getId());
+        if (courseBaseInfoDto == null){
+            XueChengPlusException.cast("详细信息" + CommonError.QUERY_NULL);
+        }
+        return courseBaseInfoDto;
+    }
+
+    private CourseBase getCourseBase(Long companyId, Long courseId) {
+        //判断是否存在该课程
+        CourseBase courseBase = getById(courseId);
+        if (courseBase == null){
+            XueChengPlusException.cast("不存在该课程");
+        }
+        //只能对自己机构的课程进行操作
+        if (!companyId.equals(courseBase.getCompanyId())){
+            XueChengPlusException.cast("只能对自己机构的课程进行操作");
+        }
+        return courseBase;
+    }
+
+    @Override
+    public void deleteCourseBaseInfo(Long companyId, Long courseId) {
+        //校验
+        CourseBase courseBase = getCourseBase(companyId, courseId);
+        //删除课程基本信息和营销信息
+        removeById(courseId);
+        CourseMarket courseMarket = courseMarketService.getById(courseId);
+        if (courseMarket != null) {
+            courseMarketService.removeById(courseId);
+        }
+    }
+
     /**
      * 保存课程营销信息
      * @param courseMarket
@@ -114,7 +160,7 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
      * @date 2023-11-05
      * @since version
      */
-    private void saveCourseMarket(CourseMarket courseMarket){
+    private void saveOrUpdateCourseMarket(CourseMarket courseMarket){
         //收费规则
         String charge = courseMarket.getCharge();
         if(StringUtils.isBlank(charge)){

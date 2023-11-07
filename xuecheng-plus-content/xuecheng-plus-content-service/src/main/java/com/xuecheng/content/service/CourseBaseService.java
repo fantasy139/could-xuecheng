@@ -5,6 +5,7 @@ import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
 import com.xuecheng.content.model.dto.AddCourseDto;
 import com.xuecheng.content.model.dto.CourseBaseInfoDto;
+import com.xuecheng.content.model.dto.EditCourseDto;
 import com.xuecheng.content.model.dto.QueryCourseParamsDto;
 import com.xuecheng.content.model.po.CourseBase;
 
@@ -41,4 +42,37 @@ public interface CourseBaseService extends IService<CourseBase> {
      * @since version
      */
     CourseBaseInfoDto saveCourse(Long companyId, AddCourseDto addCourseDto);
+
+    /**
+     * 根据id查询课程信息
+     * @param courseId
+     * @return {@code CourseBaseInfoDto }
+     * @author fantasy
+     * @date 2023-11-07
+     * @since version
+     */
+    CourseBaseInfoDto getCourseBaseInfo(Long courseId);
+
+    /**
+     * 修改课程信息
+     *
+     * @param companyId
+     * @param editCourseDto
+     * @return {@code CourseBaseInfoDto }
+     * @author fantasy
+     * @date 2023-11-07
+     * @since version
+     */
+    CourseBaseInfoDto updateCourse(Long companyId, EditCourseDto editCourseDto);
+
+    /**
+     * 删除课程
+     *
+     * @param companyId
+     * @param courseId
+     * @author fantasy
+     * @date 2023-11-07
+     * @since version
+     */
+    void deleteCourseBaseInfo(Long companyId, Long courseId);
 }
