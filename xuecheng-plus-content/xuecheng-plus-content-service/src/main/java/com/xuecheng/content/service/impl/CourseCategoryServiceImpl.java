@@ -1,6 +1,7 @@
 package com.xuecheng.content.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xuecheng.content.mapper.CourseCategoryMapper;
 import com.xuecheng.content.model.dto.CourseCategoryTreeDto;
@@ -32,7 +33,7 @@ public class CourseCategoryServiceImpl extends ServiceImpl<CourseCategoryMapper,
 
     @Override
     public List<CourseCategoryTreeDto> queryTreeNodes() {
-        List<CourseCategory> courseCategoryList = list(new LambdaQueryWrapper<CourseCategory>()
+        List<CourseCategory> courseCategoryList = list(Wrappers.<CourseCategory>lambdaQuery()
                 .eq(CourseCategory::getIsShow,"1")
                 .ne(CourseCategory::getId,ROOT_NODE)
                 .orderByAsc(CourseCategory::getParentid));

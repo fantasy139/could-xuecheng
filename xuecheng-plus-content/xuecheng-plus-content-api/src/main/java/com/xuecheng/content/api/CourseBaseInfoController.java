@@ -89,7 +89,7 @@ public class CourseBaseInfoController {
     @ApiOperation("修改课程")
     public CourseBaseInfoDto updateCourse(@RequestBody @Valid EditCourseDto editCourseDto){
         //TODO 获取当前用户的机构id(实现单点登录之后)
-        Long companyId = 111L;
+        Long companyId = 1232141425L;
         return courseBaseService.updateCourse(companyId, editCourseDto);
     }
 
