@@ -31,3 +31,12 @@ Content-Type: application/json
   "grade": "204001",
   "description": ""
 }
+
+### 课程查询列表
+POST {{gateway_host}}/content/course/list?pageNo=2&pageSize=1
+Content-Type: application/json
+
+{
+  "auditStatus": "202002",
+  "courseName": ""
+}
