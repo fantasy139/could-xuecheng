@@ -104,6 +104,6 @@ public class CourseBaseInfoController {
         //TODO 获取当前用户的机构id(实现单点登录之后)
         Long companyId = 1232141425L;
         courseBaseService.deleteCourseBaseInfo(companyId,courseId);
-        return new RestResponse<>();
+        return RestResponse.success();
     }
 }

@@ -38,14 +38,14 @@ public class TeachplanController {
     @PostMapping
     public RestResponse saveTeachplan(@RequestBody SaveTeachplanDto teachplan){
         teachplanService.saveTeachplan(teachplan);
-        return new RestResponse<>();
+        return RestResponse.success();
     }
 
     @ApiOperation("课程计划删除")
     @DeleteMapping("/{id}")
     public RestResponse saveTeachplan(@PathVariable Long id){
         teachplanService.removeById(id);
-        return new RestResponse<>();
+        return RestResponse.success();
     }
 
     @ApiOperation("课程计划上移")
@@ -53,7 +53,7 @@ public class TeachplanController {
     public RestResponse moveUpById(@PathVariable Long id){
         teachplanService.isExist(id);
         teachplanService.moveUpById(id);
-        return new RestResponse<>();
+        return RestResponse.success();
     }
 
     @ApiOperation("课程计划下移")
@@ -61,6 +61,6 @@ public class TeachplanController {
     public RestResponse moveDownById(@PathVariable Long id){
         teachplanService.isExist(id);
         teachplanService.moveDownById(id);
-        return new RestResponse<>();
+        return RestResponse.success();
     }
 }

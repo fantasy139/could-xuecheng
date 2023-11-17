@@ -1,12 +1,12 @@
 package com.xuecheng.media.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
 import com.xuecheng.media.model.dto.QueryMediaParamsDto;
 import com.xuecheng.media.model.dto.UploadFileParamsDto;
 import com.xuecheng.media.model.dto.UploadFileResultDto;
 import com.xuecheng.media.model.po.MediaFiles;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -17,7 +17,7 @@ import java.util.List;
  * @date 2022/9/10 8:55
  * @version 1.0
  */
-public interface MediaFileService {
+public interface MediaFileService extends IService<MediaFiles> {
 
     /**
      * @param companyId
