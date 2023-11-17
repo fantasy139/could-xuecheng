@@ -1,7 +1,6 @@
 package com.xuecheng.content.api;
 
-import com.xuecheng.base.execption.XueChengPlusException;
-import com.xuecheng.base.utils.CommonResult;
+import com.xuecheng.base.utils.RestResponse;
 import com.xuecheng.content.model.dto.SaveTeachplanDto;
 import com.xuecheng.content.model.dto.TeachplanDto;
 import com.xuecheng.content.service.TeachplanService;
@@ -37,31 +36,31 @@ public class TeachplanController {
 
     @ApiOperation("课程计划创建或修改")
     @PostMapping
-    public CommonResult saveTeachplan(@RequestBody SaveTeachplanDto teachplan){
+    public RestResponse saveTeachplan(@RequestBody SaveTeachplanDto teachplan){
         teachplanService.saveTeachplan(teachplan);
-        return CommonResult.success();
+        return new RestResponse<>();
     }
 
     @ApiOperation("课程计划删除")
     @DeleteMapping("/{id}")
-    public CommonResult saveTeachplan(@PathVariable Long id){
+    public RestResponse saveTeachplan(@PathVariable Long id){
         teachplanService.removeById(id);
-        return CommonResult.success();
+        return new RestResponse<>();
     }
 
     @ApiOperation("课程计划上移")
     @PostMapping("/moveup/{id}")
-    public CommonResult moveUpById(@PathVariable Long id){
+    public RestResponse moveUpById(@PathVariable Long id){
         teachplanService.isExist(id);
         teachplanService.moveUpById(id);
-        return CommonResult.success();
+        return new RestResponse<>();
     }
 
     @ApiOperation("课程计划下移")
     @PostMapping("/movedown/{id}")
-    public CommonResult moveDownById(@PathVariable Long id){
+    public RestResponse moveDownById(@PathVariable Long id){
         teachplanService.isExist(id);
         teachplanService.moveDownById(id);
-        return CommonResult.success();
+        return new RestResponse<>();
     }
 }

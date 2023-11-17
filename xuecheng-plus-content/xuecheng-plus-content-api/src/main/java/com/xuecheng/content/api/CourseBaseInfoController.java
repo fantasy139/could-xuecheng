@@ -2,7 +2,7 @@ package com.xuecheng.content.api;
 
 import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
-import com.xuecheng.base.utils.CommonResult;
+import com.xuecheng.base.utils.RestResponse;
 import com.xuecheng.content.model.dto.AddCourseDto;
 import com.xuecheng.content.model.dto.CourseBaseInfoDto;
 import com.xuecheng.content.model.dto.EditCourseDto;
@@ -10,10 +10,7 @@ import com.xuecheng.content.model.dto.QueryCourseParamsDto;
 import com.xuecheng.content.model.po.CourseBase;
 import com.xuecheng.content.service.CourseBaseService;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -96,17 +93,17 @@ public class CourseBaseInfoController {
     /**
      * 删除课程
      * @param courseId
-     * @return {@code CourseBaseInfoDto }
+     * @return {@code RestResponse }
      * @author fantasy
      * @date 2023-11-07
      * @since version
      */
     @ApiOperation("删除课程")
     @DeleteMapping("/{courseId}")
-    public CommonResult deleteCourseBaseInfo(@PathVariable Long courseId){
+    public RestResponse deleteCourseBaseInfo(@PathVariable Long courseId){
         //TODO 获取当前用户的机构id(实现单点登录之后)
         Long companyId = 1232141425L;
         courseBaseService.deleteCourseBaseInfo(companyId,courseId);
-        return CommonResult.success();
+        return new RestResponse<>();
     }
 }
