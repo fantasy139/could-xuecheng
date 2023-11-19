@@ -1,6 +1,6 @@
 package com.xuecheng.content.api;
 
-import com.xuecheng.base.utils.RestResponse;
+import com.xuecheng.base.model.RestResponse;
 import com.xuecheng.content.model.dto.SaveTeachplanDto;
 import com.xuecheng.content.model.dto.TeachplanDto;
 import com.xuecheng.content.service.TeachplanService;
