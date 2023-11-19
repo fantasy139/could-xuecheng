@@ -2,36 +2,31 @@ package com.xuecheng.media.util;
 
 import com.beust.jcommander.internal.Lists;
 import io.minio.*;
-import io.minio.errors.ErrorResponseException;
-import io.minio.errors.InsufficientDataException;
-import io.minio.errors.InvalidResponseException;
-import io.minio.errors.XmlParserException;
 import io.minio.http.Method;
 import io.minio.messages.Bucket;
+import io.minio.messages.DeleteError;
+import io.minio.messages.DeleteObject;
 import io.minio.messages.Item;
-import jdk.nashorn.internal.runtime.regexp.joni.exception.InternalException;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.compress.utils.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.annotation.Resource;
-import javax.validation.constraints.Min;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.rmi.ServerException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
+import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author fantasy
  * @description minio工具类
  * @date 2023/11/15 21:42
  */
+@Slf4j
 @Component
 public class MinioUtil {
     private final int DEFAULT_EXPIRY_TIME = 7 * 24 * 3600;
@@ -155,6 +150,29 @@ public class MinioUtil {
         return minio.putObject(args);
     }
 
+
+    /**
+     * 文件上传
+     * @param bucketName
+     * @param objectName
+     * @param multipartFile
+     * @return {@code ObjectWriteResponse }
+     * @author fantasy
+     * @date 2023-11-17
+     * @since version
+     */
+    @SneakyThrows
+    public ObjectWriteResponse putObject(String bucketName, String objectName, MultipartFile multipartFile) {
+        PutObjectArgs args = PutObjectArgs.builder()
+                .bucket(bucketName)
+                .object(objectName)
+                .contentType(multipartFile.getContentType())
+                .stream(multipartFile.getInputStream(), multipartFile.getSize(), -1)
+                .build();
+
+        return minio.putObject(args);
+    }
+
     /**
      * 通过InputStream上传对象
      *
@@ -197,6 +215,44 @@ public class MinioUtil {
     }
 
     /**
+     * 以file对象的方式拉取minio上的文件
+     * @param bucket
+     * @param objectName
+     * @return {@code File }
+     * @author fantasy
+     * @date 2023-11-18
+     * @since version
+     */
+    public File getObjectForFile(String bucket,String objectName){
+        //临时文件
+        File minioFile = null;
+        FileOutputStream outputStream = null;
+        try{
+            InputStream stream = minio.getObject(GetObjectArgs.builder()
+                    .bucket(bucket)
+                    .object(objectName)
+                    .build());
+            //创建临时文件
+            minioFile= File.createTempFile("minio", ".merge");
+            outputStream = new FileOutputStream(minioFile);
+            IOUtils.copy(stream,outputStream);
+            return minioFile;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }finally {
+            if(outputStream!=null){
+                try {
+                    outputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return null;
+    }
+
+
+    /**
      * 获取对象的元数据
      *
      * @param bucketName 存储桶名称
@@ -213,17 +269,42 @@ public class MinioUtil {
     /**
      * 删除文件
      *
+     * @param bucketName
      * @param fileName
-     * @return
-     * @throws Exception
+     * @author fantasy
+     * @date 2023-11-17
+     * @since version
      */
     @SneakyThrows
-    public void removeMinio(String fileName) {
+    public void removeObject(String bucketName, String fileName) {
         try {
-            minio.removeObject(RemoveObjectArgs.builder().bucket("test").object(fileName).build());
+            minio.removeObject(RemoveObjectArgs.builder().bucket(bucketName).object(fileName).build());
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+    }
+
+    public void removeObjects(String bucketName, String chunkFileFolderPath, int chunkTotal){
+        List<DeleteObject> deleteObjects = Stream.iterate(0, i -> ++i)
+                .limit(chunkTotal)
+                .map(i -> new DeleteObject(chunkFileFolderPath.concat(Integer.toString(i))))
+                .collect(Collectors.toList());
+
+        RemoveObjectsArgs args = RemoveObjectsArgs.builder().bucket(bucketName).objects(deleteObjects).build();
+        Iterable<Result<DeleteError>> results = minio.removeObjects(args);
+        // 要想真正的删除，得执行下面的代码
+        results.forEach(r->{
+            DeleteError deleteError = null;
+            try {
+                deleteError = r.get();
+            } catch (Exception e) {
+                e.printStackTrace();
+                if (deleteError != null) {
+                    log.error("清除分块文件失败,objectName:{}", deleteError.objectName(), e);
+                }
+            }
+        });
 
     }
 
@@ -243,5 +324,20 @@ public class MinioUtil {
 //                .expiry(60 * 60 * 24)
                 .build();
         return minio.getPresignedObjectUrl(build);
+    }
+
+    @SneakyThrows
+    public void mergeObject(String bucketName, String mergeObjectName, String chunkFileFolderPath, int chunkTotal) {
+        List<ComposeSource> sources = new ArrayList<>();
+        for (int i = 0; i < chunkTotal; i++) {
+            sources.add(ComposeSource.builder().bucket(bucketName).object(chunkFileFolderPath + i).build());
+        }
+        ComposeObjectArgs composeObjectArgs = ComposeObjectArgs.builder()
+                .sources(sources)
+                .bucket(bucketName)
+                .object(mergeObjectName)
+                .build();
+        minio.composeObject(composeObjectArgs);
+
     }
 }

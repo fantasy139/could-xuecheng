@@ -41,11 +41,11 @@ public class MediaFilesController {
 
     /**
      * 普通文件上传
+     *
      * @param file
-     * @param uploadFileParamsDto
      * @return {@code UploadFileResultDto }
      * @author fantasy
-     * @date 2023-11-15
+     * @date 2023-11-17
      * @since version
      */
     @ApiOperation("普通文件上传")
@@ -55,13 +55,8 @@ public class MediaFilesController {
         UploadFileParamsDto uploadFileParamsDto = new UploadFileParamsDto();
         //文件大小
         uploadFileParamsDto.setFileSize(file.getSize());
-        //图片
-        uploadFileParamsDto.setFileType("001001");
         //文件名称
         uploadFileParamsDto.setFilename(file.getOriginalFilename());
-        //文件大小
-        long fileSize = file.getSize();
-        uploadFileParamsDto.setFileSize(fileSize);
 
         return mediaFileService.upload(companyId, file, uploadFileParamsDto);
     }

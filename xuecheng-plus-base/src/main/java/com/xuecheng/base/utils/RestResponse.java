@@ -50,13 +50,19 @@ public class RestResponse<T> {
    * @param <T>
    * @return
    */
-  public static <T> RestResponse<T> validfail(String msg) {
+  public static <T> RestResponse<T> validFail(String msg) {
    RestResponse<T> response = new RestResponse<T>();
    response.setCode(-1);
    response.setMsg(msg);
    return response;
   }
-  public static <T> RestResponse<T> validfail(T result,String msg) {
+    public static <T> RestResponse<T> validFail(T t) {
+        RestResponse<T> response = new RestResponse<T>();
+        response.setCode(-1);
+        response.setResult(t);
+        return response;
+    }
+  public static <T> RestResponse<T> validFail(T result,String msg) {
    RestResponse<T> response = new RestResponse<T>();
    response.setCode(-1);
    response.setResult(result);

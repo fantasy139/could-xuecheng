@@ -43,4 +43,51 @@ public interface MediaFileService extends IService<MediaFiles> {
      * @since version
      */
     UploadFileResultDto upload(Long companyId, MultipartFile file, UploadFileParamsDto uploadFileParamsDto);
+
+    /**
+     * 判断文件是否存在
+     * @param fileMd5
+     * @return boolean
+     * @author fantasy
+     * @date 2023-11-17
+     * @since version
+     */
+    boolean checkFile(String fileMd5);
+
+    /**
+     * 判断分块文件是否存在
+     * @param fileMd5
+     * @param chunk
+     * @return boolean
+     * @author fantasy
+     * @date 2023-11-17
+     * @since version
+     */
+    boolean checkChunk(String fileMd5, int chunk);
+
+    /**
+     * 上传分块文件
+     *
+     * @param file
+     * @param fileMd5
+     * @param chunk
+     * @author fantasy
+     * @date 2023-11-17
+     * @since version
+     */
+    void uploadChunk(MultipartFile file, String fileMd5, int chunk);
+
+    /**
+     * 合并文件
+     *
+     * @param companyId
+     * @param fileMd5
+     * @param fileName
+     * @param chunkTotal
+     * @param uploadFileParamsDto
+     * @author fantasy
+     * @date 2023-11-17
+     * @since version
+     */
+    void mergeChunks(Long companyId, String fileMd5, String fileName, int chunkTotal, UploadFileParamsDto uploadFileParamsDto);
 }
