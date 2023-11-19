@@ -19,6 +19,7 @@ import com.xuecheng.media.util.MinioUtil;
 import lombok.SneakyThrows;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -55,7 +56,7 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFil
     MediaFilesMapper mediaFilesMapper;
 
     @Autowired
-    MinioUtil minioUtil;
+    private MinioUtil minioUtil;
 
     @Override
     public PageResult<MediaFiles> queryMediaFiles(Long companyId, PageParams pageParams, QueryMediaParamsDto queryMediaParamsDto) {
@@ -99,7 +100,7 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFil
         //图片
         uploadFileParamsDto.setFileType(FileTypeEnum.PICTURE.getFileType());
         //将文件信息保存至数据库
-        MediaFiles mediaFiles = saveMediaFile(companyId, fileMd5, uploadFileParamsDto, objectName);
+        MediaFiles mediaFiles = saveMediaFile(companyId, fileMd5, uploadFileParamsDto, objectName, files);
         UploadFileResultDto uploadFileResultDto = new UploadFileResultDto();
         BeanUtils.copyProperties(mediaFiles, uploadFileResultDto);
         return uploadFileResultDto;
@@ -114,7 +115,7 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFil
                     return true;
                 }
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                return false;
             }
         }
         return false;
@@ -150,7 +151,7 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFil
         //从minio上下载文件
         File minioFile = minioUtil.getObjectForFile(videoFiles, mergeObjectName);
         String minioFileMd5 = getFileMd5(minioFile);
-        if (!fileMd5.equals(minioFileMd5)){
+        if (!fileMd5.equals(minioFileMd5)) {
             XueChengPlusException.cast("合并后的文件与源文件不符");
         }
         //设置文件大小
@@ -159,13 +160,36 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFil
         //删除临时文件
         FileUtils.deleteQuietly(minioFile);
         // 合并成功后保存该文件记录
-        saveMediaFile(companyId, fileMd5, uploadFileParamsDto, mergeObjectName);
+        saveMediaFile(companyId, fileMd5, uploadFileParamsDto, mergeObjectName, videoFiles);
         //清除分块和minio上下下来的文件
         minioUtil.removeObjects(videoFiles, chunkFileFolderPath, chunkTotal);
     }
 
+    @Override
+    public String previewFileById(String mediaId) {
+        MediaFiles mediaFiles = getById(mediaId);
+        if (mediaFiles == null || StringUtils.isBlank(mediaFiles.getUrl())) {
+            throw new RuntimeException("未找到该条文件记录");
+        }
+        try (InputStream inputStream = minioUtil.getObject("video", mediaFiles.getFilePath())) {
+            return mediaFiles.getUrl();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void removeFileById(String mediaId) {
+        MediaFiles mediaFiles = getById(mediaId);
+        if (mediaFiles == null) {
+            throw new RuntimeException("未找到该条文件记录");
+        }
+        removeById(mediaId);
+    }
+
     /**
      * 保存文件记录
+     *
      * @param companyId
      * @param fileMd5
      * @param uploadFileParamsDto
@@ -174,7 +198,7 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFil
      * @date 2023-11-17
      * @since version
      */
-    private MediaFiles saveMediaFile(Long companyId, String fileMd5, UploadFileParamsDto uploadFileParamsDto, String objectName) {
+    private MediaFiles saveMediaFile(Long companyId, String fileMd5, UploadFileParamsDto uploadFileParamsDto, String objectName, String bucket) {
         MediaFiles mediaFiles = mediaFilesMapper.selectById(fileMd5);
         if (mediaFiles == null) {
             mediaFiles = new MediaFiles();
@@ -182,8 +206,8 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFil
             mediaFiles.setId(fileMd5);
             mediaFiles.setFileId(fileMd5);
             mediaFiles.setCompanyId(companyId);
-            mediaFiles.setUrl("/" + files + "/" + objectName);
-            mediaFiles.setBucket(files);
+            mediaFiles.setUrl("/" + bucket + "/" + objectName);
+            mediaFiles.setBucket(bucket);
             mediaFiles.setFilePath(objectName);
             mediaFiles.setCreateDate(LocalDateTime.now());
             mediaFiles.setAuditStatus("002003");
@@ -281,12 +305,13 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFil
 
     /**
      * 得到合并后的文件的地址
+     *
      * @param fileMd5 文件id即md5值
      * @param fileExt 文件扩展名
      * @return
      */
-    private String getFilePathByMd5(String fileMd5,String fileExt){
-        return fileMd5.charAt(0) + "/" + fileMd5.charAt(1) + "/" + fileMd5 + "/" +fileMd5 +fileExt;
+    private String getFilePathByMd5(String fileMd5, String fileExt) {
+        return fileMd5.charAt(0) + "/" + fileMd5.charAt(1) + "/" + fileMd5 + "/" + fileMd5 + fileExt;
     }
 
 }

@@ -2,6 +2,7 @@ package com.xuecheng.media.api;
 
 import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
+import com.xuecheng.base.model.RestResponse;
 import com.xuecheng.media.model.dto.QueryMediaParamsDto;
 import com.xuecheng.media.model.dto.UploadFileParamsDto;
 import com.xuecheng.media.model.dto.UploadFileResultDto;
@@ -11,10 +12,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -59,5 +57,26 @@ public class MediaFilesController {
         uploadFileParamsDto.setFilename(file.getOriginalFilename());
 
         return mediaFileService.upload(companyId, file, uploadFileParamsDto);
+    }
+
+    /**
+     * 预览文件
+     * @param mediaId
+     * @return {@code RestResponse<String> }
+     * @author fantasy
+     * @date 2023-11-19
+     * @since version
+     */
+    @ApiOperation(value = "预览文件")
+    @GetMapping("/preview/{mediaId}")
+    public RestResponse<String> previewFile(@PathVariable("mediaId") String mediaId){
+        return RestResponse.success(mediaFileService.previewFileById(mediaId));
+    }
+
+    @ApiOperation(value = "删除文件")
+    @DeleteMapping("/{mediaId}")
+    public RestResponse<String> removeFile(@PathVariable("mediaId") String mediaId){
+        mediaFileService.removeFileById(mediaId);
+        return RestResponse.success();
     }
 }

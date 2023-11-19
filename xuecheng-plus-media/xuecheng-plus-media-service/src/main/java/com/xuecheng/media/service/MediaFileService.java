@@ -9,8 +9,6 @@ import com.xuecheng.media.model.dto.UploadFileResultDto;
 import com.xuecheng.media.model.po.MediaFiles;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-
 /**
  * @description 媒资文件管理业务类
  * @author Mr.M
@@ -90,4 +88,24 @@ public interface MediaFileService extends IService<MediaFiles> {
      * @since version
      */
     void mergeChunks(Long companyId, String fileMd5, String fileName, int chunkTotal, UploadFileParamsDto uploadFileParamsDto);
+
+    /**
+     * 预览视频
+     *
+     * @param mediaId
+     * @return {@code String }
+     * @author fantasy
+     * @date 2023-11-19
+     * @since version
+     */
+    String previewFileById(String mediaId);
+
+    /**
+     * 根据id删除文件
+     * @param mediaId
+     * @author fantasy
+     * @date 2023-11-19
+     * @since version
+     */
+    void removeFileById(String mediaId);
 }
