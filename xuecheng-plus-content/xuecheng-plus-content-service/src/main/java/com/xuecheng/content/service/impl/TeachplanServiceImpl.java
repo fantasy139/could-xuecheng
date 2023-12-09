@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xuecheng.base.execption.XueChengPlusException;
 import com.xuecheng.content.mapper.TeachplanMapper;
+import com.xuecheng.content.model.dto.BindTeachplanMediaDto;
 import com.xuecheng.content.model.dto.CourseCategoryTreeDto;
 import com.xuecheng.content.model.dto.SaveTeachplanDto;
 import com.xuecheng.content.model.dto.TeachplanDto;
@@ -19,8 +20,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,6 +42,10 @@ public class TeachplanServiceImpl extends ServiceImpl<TeachplanMapper, Teachplan
     @Resource
     private TeachplanMediaService teachplanMediaService;
     private final static Long ROOT_NODE = 0L;
+    /**
+     * 二级课程计划
+     */
+    private final static Integer SECONDARY_TEACHER_PLAN = 2;
     @Override
     public List<TeachplanDto> getTreeNodes(Long courseId) {
         LambdaQueryWrapper<Teachplan> wrapper = new LambdaQueryWrapper<>();
@@ -107,9 +114,8 @@ public class TeachplanServiceImpl extends ServiceImpl<TeachplanMapper, Teachplan
     @Override
     public void moveUpById(Long id) {
         //判断是否存在
-        isExist(id);
+        Teachplan teachplan = isExist(id);
         //排好序，查出当前对象的上一个对象
-        Teachplan teachplan = getById(id);
         Integer orderby = teachplan.getOrderby();
         LambdaQueryWrapper<Teachplan> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Teachplan::getCourseId, teachplan.getCourseId())
@@ -132,20 +138,20 @@ public class TeachplanServiceImpl extends ServiceImpl<TeachplanMapper, Teachplan
         return count(wrapper) + 1;
     }
 
-    public void isExist(Long id){
+    public Teachplan isExist(Long id){
         Teachplan teachplan = getById(id);
         if (teachplan == null){
             log.error("该对象不存在，id：{}", id);
             XueChengPlusException.cast("该对象不存在，id：" + id);
         }
+        return teachplan;
     }
 
     @Override
     public void moveDownById(Long id) {
         //判断是否存在
-        isExist(id);
+        Teachplan teachplan = isExist(id);
         //排好序，查出当前对象的下一个对象
-        Teachplan teachplan = getById(id);
         Integer orderby = teachplan.getOrderby();
         LambdaQueryWrapper<Teachplan> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Teachplan::getCourseId, teachplan.getCourseId())
@@ -159,5 +165,36 @@ public class TeachplanServiceImpl extends ServiceImpl<TeachplanMapper, Teachplan
         newTeachplan.setOrderby(orderby);
         updateById(teachplan);
         updateById(newTeachplan);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void associationMedia(BindTeachplanMediaDto bindTeachplanMediaDto) {
+        Long teachplanId = bindTeachplanMediaDto.getTeachplanId();
+        Teachplan teachplan = isExist(teachplanId);
+        if (!SECONDARY_TEACHER_PLAN.equals(teachplan.getGrade())){
+            XueChengPlusException.cast("只允许第二级教学计划绑定媒资");
+        }
+        // 先将这条课程计划原有的媒资信息删除
+        teachplanMediaService.remove(Wrappers.<TeachplanMedia>lambdaQuery()
+                .eq(TeachplanMedia::getTeachplanId, teachplanId));
+        TeachplanMedia teachplanMedia = new TeachplanMedia();
+        BeanUtils.copyProperties(bindTeachplanMediaDto, teachplanMedia);
+        teachplanMedia.setMediaFilename(bindTeachplanMediaDto.getFileName());
+        teachplanMedia.setCourseId(teachplan.getCourseId());
+        teachplanMedia.setCreateDate(LocalDateTime.now());
+        // TODO 这里还要插入创建人（当前用户）
+        teachplanMediaService.save(teachplanMedia);
+    }
+
+    @Override
+    public void disassociationMedia(Long teachplanId, String mediaId) {
+        TeachplanMedia teachplanMedia = teachplanMediaService.getOne(Wrappers.<TeachplanMedia>lambdaQuery()
+                .eq(TeachplanMedia::getTeachplanId, teachplanId)
+                .eq(TeachplanMedia::getMediaId, mediaId));
+        if (null == teachplanMedia){
+            XueChengPlusException.cast("删除失败，不存在该关联关系");
+        }
+        teachplanMediaService.removeById(teachplanMedia.getId());
     }
 }

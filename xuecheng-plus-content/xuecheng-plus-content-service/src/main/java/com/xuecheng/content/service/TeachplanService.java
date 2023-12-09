@@ -1,6 +1,7 @@
 package com.xuecheng.content.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.xuecheng.content.model.dto.BindTeachplanMediaDto;
 import com.xuecheng.content.model.dto.SaveTeachplanDto;
 import com.xuecheng.content.model.dto.TeachplanDto;
 import com.xuecheng.content.model.po.Teachplan;
@@ -49,11 +50,12 @@ public interface TeachplanService extends IService<Teachplan> {
     /**
      * 通过id校验对象是否存在
      * @param id
+     * @return {@code Teachplan }
      * @author fantasy
-     * @date 2023-11-09
+     * @date 2023-12-09
      * @since version
      */
-    void isExist(Long id);
+    Teachplan isExist(Long id);
 
     /**
      * 课程计划下移
@@ -63,4 +65,22 @@ public interface TeachplanService extends IService<Teachplan> {
      * @since version
      */
     void moveDownById(Long id);
+
+    /**
+     * 课程计划和媒资信息绑定
+     * @author fantasy
+     * @date 2023-12-09
+     * @since version
+     */
+    void associationMedia(BindTeachplanMediaDto bindTeachplanMediaDto);
+
+    /**
+     * 课程计划和媒资信息解绑
+     * @param teachplanId
+     * @param mediaId
+     * @author fantasy
+     * @date 2023-12-09
+     * @since version
+     */
+    void disassociationMedia(Long teachplanId, String mediaId);
 }

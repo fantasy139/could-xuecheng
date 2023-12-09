@@ -92,10 +92,14 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFil
 
     @Override
     public PageResult<MediaFiles> queryMediaFiles(Long companyId, PageParams pageParams, QueryMediaParamsDto queryMediaParamsDto) {
-
+        String fileType = queryMediaParamsDto.getFileType();
+        String auditStatus = queryMediaParamsDto.getAuditStatus();
+        String filename = queryMediaParamsDto.getFilename();
         //构建查询条件对象
         LambdaQueryWrapper<MediaFiles> queryWrapper = new LambdaQueryWrapper<>();
-
+        queryWrapper.like(StringUtils.isNotBlank(filename), MediaFiles::getFilename, filename)
+                .eq(StringUtils.isNotBlank(fileType), MediaFiles::getFileType, fileType)
+                .eq(StringUtils.isNotBlank(auditStatus), MediaFiles::getAuditStatus, auditStatus);
         //分页对象
         Page<MediaFiles> page = new Page<>(pageParams.getPageNo(), pageParams.getPageSize());
         // 查询数据内容获得结果
