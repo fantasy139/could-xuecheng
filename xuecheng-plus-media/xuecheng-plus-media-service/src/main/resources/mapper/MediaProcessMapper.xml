@@ -19,4 +19,8 @@
         id, file_id, filename, bucket, status, create_date, finish_date, url
     </sql>
 
+    <select id="getMediaProcessList" resultType="com.xuecheng.media.model.po.MediaProcess">
+        select * from media_process
+        where id % #{shardTotal} = #{shardIndex} and status in (1,5) and fail_count &lt; 5
+    </select>
 </mapper>

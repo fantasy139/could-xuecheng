@@ -7,6 +7,7 @@ import com.xuecheng.media.model.dto.QueryMediaParamsDto;
 import com.xuecheng.media.model.dto.UploadFileParamsDto;
 import com.xuecheng.media.model.dto.UploadFileResultDto;
 import com.xuecheng.media.model.po.MediaFiles;
+import com.xuecheng.media.model.po.MediaProcess;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -108,4 +109,15 @@ public interface MediaFileService extends IService<MediaFiles> {
      * @since version
      */
     void removeFileById(String mediaId);
+
+    /**
+     * 将avi格式的视频转为mp4
+     *
+     * @param mediaProcess
+     * @return {@code MediaProcess }
+     * @author fantasy
+     * @date 2023-12-02
+     * @since version
+     */
+    MediaProcess convertAviTypeVideo(MediaProcess mediaProcess);
 }

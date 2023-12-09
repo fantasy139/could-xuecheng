@@ -1,19 +1,17 @@
-package com.xuecheng.media.mapper;
+package com.xuecheng.media.service;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.xuecheng.media.model.po.MediaProcess;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
 /**
- * <p>
- *  Mapper 接口
- * </p>
- *
- * @author itcast
+ * @author fantasy
+ * @description 待处理文件 service
+ * @date 2023/11/22 21:22
  */
-public interface MediaProcessMapper extends BaseMapper<MediaProcess> {
+public interface MediaProcessService extends IService<MediaProcess> {
     /**
      * 查询当前定时任务节点的待处理任务
      * @param shardIndex

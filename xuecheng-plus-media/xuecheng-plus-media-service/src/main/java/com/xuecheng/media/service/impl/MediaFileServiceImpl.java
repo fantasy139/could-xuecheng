@@ -8,27 +8,34 @@ import com.j256.simplemagic.ContentInfoUtil;
 import com.xuecheng.base.execption.XueChengPlusException;
 import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
+import com.xuecheng.base.utils.Mp4VideoUtil;
+import com.xuecheng.media.enums.ConvertStatusEnum;
 import com.xuecheng.media.enums.FileTypeEnum;
 import com.xuecheng.media.mapper.MediaFilesMapper;
 import com.xuecheng.media.model.dto.QueryMediaParamsDto;
 import com.xuecheng.media.model.dto.UploadFileParamsDto;
 import com.xuecheng.media.model.dto.UploadFileResultDto;
 import com.xuecheng.media.model.po.MediaFiles;
+import com.xuecheng.media.model.po.MediaProcess;
 import com.xuecheng.media.service.MediaFileService;
+import com.xuecheng.media.service.MediaProcessService;
 import com.xuecheng.media.util.MinioUtil;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -40,6 +47,7 @@ import java.util.List;
  * @description TODO
  * @date 2022/9/10 8:58
  */
+@Slf4j
 @Service
 public class MediaFileServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFiles> implements MediaFileService {
 
@@ -52,11 +60,35 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFil
     @Value("${file.tempPath}")
     private String tempPath;
 
-    @Resource
-    MediaFilesMapper mediaFilesMapper;
+    @Value("${file.ffmpegPath}")
+    private String ffmpegPath;
 
-    @Autowired
+    @Resource
+    private MediaFilesMapper mediaFilesMapper;
+
+    @Resource
     private MinioUtil minioUtil;
+
+    @Resource
+    private MediaProcessService mediaProcessService;
+
+    /**
+     * 本类的代理对象，如果不注入的话调用方法默认是this.方法名，非代理对象调用事务方法会导致事务失效
+     */
+    @Resource
+    private MediaFileServiceImpl mediaFileServiceProxy;
+
+    /**
+     * 待处理文件的格式
+     */
+    private static final String PENDING_FILE_MIMETYPE = "video/x-msvideo";
+
+    /**
+     * 文件转换结果
+     */
+    private static final String CONVERT_RESULT = "success";
+
+    private static final String MP4_EXTENSION = ".mp4";
 
     @Override
     public PageResult<MediaFiles> queryMediaFiles(Long companyId, PageParams pageParams, QueryMediaParamsDto queryMediaParamsDto) {
@@ -88,7 +120,7 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFil
         File file = transferToFile(multipartFile);
         String fileMd5 = getFileMd5(file);
         //获取文件后缀名
-        String extension = multipartFile.getOriginalFilename().substring(multipartFile.getOriginalFilename().lastIndexOf("."));
+        String extension = getExtension(multipartFile.getOriginalFilename());
         String objectName = defaultFolderPath + fileMd5 + extension;
         try (InputStream inputStream = new FileInputStream(file)) {
             minioUtil.putObject(files, objectName, inputStream, multipartFile.getContentType());
@@ -100,7 +132,7 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFil
         //图片
         uploadFileParamsDto.setFileType(FileTypeEnum.PICTURE.getFileType());
         //将文件信息保存至数据库
-        MediaFiles mediaFiles = saveMediaFile(companyId, fileMd5, uploadFileParamsDto, objectName, files);
+        MediaFiles mediaFiles = mediaFileServiceProxy.saveMediaFile(companyId, fileMd5, uploadFileParamsDto, objectName, files);
         UploadFileResultDto uploadFileResultDto = new UploadFileResultDto();
         BeanUtils.copyProperties(mediaFiles, uploadFileResultDto);
         return uploadFileResultDto;
@@ -114,7 +146,7 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFil
                 if (inputStream != null) {
                     return true;
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 return false;
             }
         }
@@ -160,7 +192,7 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFil
         //删除临时文件
         FileUtils.deleteQuietly(minioFile);
         // 合并成功后保存该文件记录
-        saveMediaFile(companyId, fileMd5, uploadFileParamsDto, mergeObjectName, videoFiles);
+        mediaFileServiceProxy.saveMediaFile(companyId, fileMd5, uploadFileParamsDto, mergeObjectName, videoFiles);
         //清除分块和minio上下下来的文件
         minioUtil.removeObjects(videoFiles, chunkFileFolderPath, chunkTotal);
     }
@@ -187,8 +219,45 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFil
         removeById(mediaId);
     }
 
+    @Override
+    public MediaProcess convertAviTypeVideo(MediaProcess mediaProcess){
+        String aviFilePath = tempPath + mediaProcess.getFilename();
+        String bucket = mediaProcess.getBucket();
+        String mp4FileName = mediaProcess.getFileId().concat(MP4_EXTENSION);
+        String mp4FilePath = tempPath + mp4FileName;
+        try (InputStream inputStream =minioUtil.getObject(bucket, mediaProcess.getFilePath());
+             OutputStream outputStream = Files.newOutputStream(Paths.get(aviFilePath))) {
+            // 将minio上的文件流保存到本地
+            byte[] buffer = new byte[1024];
+            int len;
+            while ((len = inputStream.read(buffer)) != -1){
+                outputStream.write(buffer, 0, len);
+            }
+            // 创建工具类对象
+            Mp4VideoUtil videoUtil = new Mp4VideoUtil(ffmpegPath, aviFilePath, mp4FileName, mp4FilePath);
+            // 开始视频转换，成功将返回success
+            String result = videoUtil.generateMp4();
+            if (!CONVERT_RESULT.equals(result)){
+                log.error("视频转换定时任务===>视频转码失败,fileId：{},原因：{}", bucket, mediaProcess.getFileId());
+                throw new RuntimeException("视频转码失败");
+            }
+            String objectName = mediaProcess.getFilePath().replace(getExtension(aviFilePath),  MP4_EXTENSION);
+            try (InputStream fileInputStream = Files.newInputStream(Paths.get(mp4FilePath))) {
+                minioUtil.putObject(bucket, objectName, fileInputStream, getMimeType(MP4_EXTENSION));
+            }
+            mediaProcess.setFilename(mp4FileName);
+            mediaProcess.setFilePath(objectName);
+            mediaProcess.setUrl(mediaProcess.getUrl().replace(getExtension(aviFilePath),  MP4_EXTENSION));
+            mediaProcess.setStatus(ConvertStatusEnum.SUCCESSFULLY_PROCESSED.getConvertFileStatus());
+            return mediaProcess;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
      * 保存文件记录
+     * 如果是非事务方法调用事务方法，必须是代理对象来调用，否则事务不会生效，并且被调用的事务方法需要是public的
      *
      * @param companyId
      * @param fileMd5
@@ -198,7 +267,8 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFil
      * @date 2023-11-17
      * @since version
      */
-    private MediaFiles saveMediaFile(Long companyId, String fileMd5, UploadFileParamsDto uploadFileParamsDto, String objectName, String bucket) {
+    @Transactional(rollbackFor = Exception.class)
+    public MediaFiles saveMediaFile(Long companyId, String fileMd5, UploadFileParamsDto uploadFileParamsDto, String objectName, String bucket) {
         MediaFiles mediaFiles = mediaFilesMapper.selectById(fileMd5);
         if (mediaFiles == null) {
             mediaFiles = new MediaFiles();
@@ -218,6 +288,17 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFil
                 XueChengPlusException.cast(message);
             }
         }
+        // 如果上传的文件是avi格式的视频，要将他添加到待处理文件表中，让定时任务去将他转为mp4格式
+        String mimeType = getMimeType(getExtension(mediaFiles.getFilename()));
+        if (PENDING_FILE_MIMETYPE.equals(mimeType)){
+            //将文件信息写入到待处理文件表中
+            MediaProcess mediaProcess = new MediaProcess();
+            BeanUtils.copyProperties(mediaFiles,mediaProcess);
+            mediaProcess.setStatus("1");
+            mediaProcess.setFailCount(0);
+            mediaProcess.setCreateDate(LocalDateTime.now());
+            mediaProcessService.save(mediaProcess);
+        }
         return mediaFiles;
     }
 
@@ -230,7 +311,7 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFil
      * @date 2023-11-15
      * @since version
      */
-    private String getMimeType(String extension) {
+    private static String getMimeType(String extension) {
         if (extension == null) {
             extension = "";
         }
@@ -314,4 +395,10 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFil
         return fileMd5.charAt(0) + "/" + fileMd5.charAt(1) + "/" + fileMd5 + "/" + fileMd5 + fileExt;
     }
 
+    private String getExtension(String fileName){
+        if (StringUtils.isBlank(fileName)){
+            XueChengPlusException.cast("文件名为空，无法获取后缀名！");
+        }
+        return fileName.substring(fileName.lastIndexOf("."));
+    }
 }
