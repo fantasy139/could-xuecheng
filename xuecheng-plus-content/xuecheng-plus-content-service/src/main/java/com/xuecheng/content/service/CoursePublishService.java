@@ -13,4 +13,15 @@ import com.xuecheng.content.model.po.CoursePublish;
  */
 public interface CoursePublishService extends IService<CoursePublish> {
 
+
+    /**
+     * 课程发布
+     *
+     * @param companyId
+     * @param courseId
+     * @author fantasy
+     * @date 2024-01-14
+     * @since version
+     */
+    void coursePublish(Long companyId, Long courseId);
 }
