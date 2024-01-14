@@ -24,14 +24,7 @@ public class MessageCodeGenerator {
 	private static final String DATA_SOURCE_PASSWORD  = "mysql";
 	//生成的表
 	private static final String[] TABLE_NAMES = new String[]{
-			"course_base",
-			"course_market",
-			"course_teacher",
-			"course_category",
-			"teachplan",
-			"teachplan_media",
-			"course_publish",
-			"course_publish_pre"
+			"course_audit"
 	};
 
 	// TODO 默认生成entity，需要生成DTO修改此变量
