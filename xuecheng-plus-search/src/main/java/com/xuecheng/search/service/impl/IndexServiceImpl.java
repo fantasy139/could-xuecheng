@@ -1,7 +1,7 @@
 package com.xuecheng.search.service.impl;
 
 import com.alibaba.fastjson.JSON;
-import com.xuecheng.base.exception.XueChengPlusException;
+import com.xuecheng.base.execption.XueChengPlusException;
 import com.xuecheng.search.po.CourseIndex;
 import com.xuecheng.search.service.IndexService;
 import lombok.extern.slf4j.Slf4j;
