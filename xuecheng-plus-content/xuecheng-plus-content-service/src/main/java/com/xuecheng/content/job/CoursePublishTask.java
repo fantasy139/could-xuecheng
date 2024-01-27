@@ -1,12 +1,21 @@
 package com.xuecheng.content.job;
 
+import com.xuecheng.base.execption.XueChengPlusException;
+import com.xuecheng.content.api.SearchServiceApi;
+import com.xuecheng.content.model.po.CourseIndex;
+import com.xuecheng.content.model.po.CoursePublish;
+import com.xuecheng.content.service.CoursePublishService;
 import com.xuecheng.messagesdk.model.po.MqMessage;
 import com.xuecheng.messagesdk.service.MessageProcessAbstract;
 import com.xuecheng.messagesdk.service.MqMessageService;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
 
 /**
  * @author fantasy
@@ -16,6 +25,12 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class CoursePublishTask extends MessageProcessAbstract {
+
+    @Autowired
+    private SearchServiceApi searchServiceApi;
+
+    @Resource
+    private CoursePublishService coursePublishService;
 
     @XxlJob("CoursePublishJob")
     public void coursePublishJob(){
@@ -33,7 +48,7 @@ public class CoursePublishTask extends MessageProcessAbstract {
         // 获取消息相关的业务信息
         String businessKey1 = mqMessage.getBusinessKey1();
         long courseId = Integer.parseInt(businessKey1);
-        // 课程静态化
+        // 课程静态化，跳过
         generateCourseHtml(mqMessage, courseId);
         // 课程索引
         saveCourseIndex(mqMessage, courseId);
@@ -75,12 +90,14 @@ public class CoursePublishTask extends MessageProcessAbstract {
             log.debug("课程索引已处理直接返回，课程id:{}", courseId);
             return;
         }
-        try {
-            Thread.sleep(10);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+        CourseIndex courseIndex = new CourseIndex();
+        CoursePublish coursePublish = coursePublishService.getById(courseId);
+        BeanUtils.copyProperties(coursePublish, courseIndex);
+        Boolean result = searchServiceApi.add(courseIndex);
+        if (!result){
+            XueChengPlusException.cast("远程调用添加课程索引接口失败！课程id：" + courseId);
         }
-        //保存第一阶段状态
+        //保存第二阶段状态
         mqMessageService.completedStageTwo(id);
     }
 
