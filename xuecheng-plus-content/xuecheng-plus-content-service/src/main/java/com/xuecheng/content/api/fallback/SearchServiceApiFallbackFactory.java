@@ -1,6 +1,5 @@
 package com.xuecheng.content.api.fallback;
 
-import com.xuecheng.base.execption.XueChengPlusException;
 import com.xuecheng.content.api.SearchServiceApi;
 import com.xuecheng.content.model.po.CourseIndex;
 import feign.hystrix.FallbackFactory;
@@ -9,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * @author fantasy
- * @description TODO
+ * @description 搜索服务降级
  * @date 2024/1/20 16:08
  */
 

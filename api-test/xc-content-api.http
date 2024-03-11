@@ -1,6 +1,7 @@
 ### 课程管理
 ### 列表
 POST {{content_host}}/content/course/list?pageNo=1&pageSize=10
+Authorization: bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsieHVlY2hlbmctcGx1cyJdLCJ1c2VyX25hbWUiOiJ6aGFuZ3NhbiIsInNjb3BlIjpbImFsbCJdLCJleHAiOjE3MTAwNjIyMTYsImF1dGhvcml0aWVzIjpbInAxIl0sImp0aSI6IjZlMjYzZmM4LTIxYmMtNGJlYy1hM2IzLTA4NDRlZjgzNTBmYiIsImNsaWVudF9pZCI6IlhjV2ViQXBwIn0.d62vafHTQroEta8bmwS5USWRXXn-K3S0L3wqskTv9bs
 Content-Type: application/json
 
 {
@@ -40,3 +41,6 @@ Content-Type: application/json
   "auditStatus": "202002",
   "courseName": ""
 }
+
+### 密码模式
+POST {{auth_host}}/auth/oauth/token?client_id=XcWebApp&client_secret=XcWebApp&grant_type=password&username=zhangsan&password=123
