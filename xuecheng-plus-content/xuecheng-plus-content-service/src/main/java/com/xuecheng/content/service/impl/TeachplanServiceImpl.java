@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xuecheng.base.execption.XueChengPlusException;
+import com.xuecheng.base.utils.SecurityUtil;
 import com.xuecheng.content.mapper.TeachplanMapper;
 import com.xuecheng.content.model.dto.BindTeachplanMediaDto;
 import com.xuecheng.content.model.dto.CourseCategoryTreeDto;
@@ -183,7 +184,7 @@ public class TeachplanServiceImpl extends ServiceImpl<TeachplanMapper, Teachplan
         teachplanMedia.setMediaFilename(bindTeachplanMediaDto.getFileName());
         teachplanMedia.setCourseId(teachplan.getCourseId());
         teachplanMedia.setCreateDate(LocalDateTime.now());
-        // TODO 这里还要插入创建人（当前用户）
+        teachplanMedia.setCreatePeople(SecurityUtil.getUser().getId());
         teachplanMediaService.save(teachplanMedia);
     }
 

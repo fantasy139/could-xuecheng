@@ -1,21 +1,19 @@
 package com.xuecheng.content.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.api.R;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xuecheng.base.execption.CommonError;
 import com.xuecheng.base.execption.XueChengPlusException;
 import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
+import com.xuecheng.content.api.UserServiceApi;
 import com.xuecheng.content.mapper.CourseBaseMapper;
 import com.xuecheng.content.model.dto.AddCourseDto;
 import com.xuecheng.content.model.dto.CourseBaseInfoDto;
 import com.xuecheng.content.model.dto.EditCourseDto;
 import com.xuecheng.content.model.dto.QueryCourseParamsDto;
 import com.xuecheng.content.model.po.CourseBase;
-import com.xuecheng.content.model.po.CourseCategory;
 import com.xuecheng.content.model.po.CourseMarket;
 import com.xuecheng.content.service.CourseBaseService;
 import com.xuecheng.content.service.CourseCategoryService;
@@ -26,6 +24,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -47,6 +46,9 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
 
     @Resource
     private CourseCategoryService courseCategoryService;
+
+    @Autowired
+    private UserServiceApi userServiceApi;
 
     private static final String CHARGE = "201001";
 
@@ -72,8 +74,10 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
         //向课程基本信息表插入数据
         CourseBase courseBase = new CourseBase();
         BeanUtils.copyProperties(addCourseDto,courseBase);
-        //TODO 后续要根据companyId查询出companyName一起传入courseBase中
+        String companyName = userServiceApi.getCompanyNameById(String.valueOf(companyId));
+        Assert.notNull(companyName, "查询机构名称失败");
         courseBase.setCompanyId(companyId);
+        courseBase.setCompanyName(companyName);
         courseBase.setCreateDate(LocalDateTime.now());
         courseBase.setAuditStatus("202002");
         courseBase.setStatus("203001");

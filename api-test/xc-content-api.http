@@ -11,7 +11,8 @@ Content-Type: application/json
 }
 
 ### 创建课程
-POST {{content_host}}/content/course
+POST {{gateway_host}}/content/course
+Authorization: bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsieHVlY2hlbmctcGx1cyJdLCJ1c2VyX25hbWUiOiJ7XCJjb21wYW55SWRcIjpcIjEyMzIxNDE0MjVcIixcImNyZWF0ZVRpbWVcIjpcIjIwMjItMDktMjhUMDg6MzI6MDNcIixcImlkXCI6XCI1MlwiLFwibmFtZVwiOlwiTeiAgeW4iFwiLFwic2V4XCI6XCIxXCIsXCJzdGF0dXNcIjpcIlwiLFwidXNlcm5hbWVcIjpcInQxXCIsXCJ1dHlwZVwiOlwiMTAxMDAyXCJ9Iiwic2NvcGUiOlsiYWxsIl0sImV4cCI6MTcxMDE3Mjk1NywiYXV0aG9yaXRpZXMiOlsidGVzdCJdLCJqdGkiOiI5MzNkYWIzOC01YzhlLTRkMDQtOWEzMi1kN2JlMzBlZDA4OGUiLCJjbGllbnRfaWQiOiJYY1dlYkFwcCJ9.QCD0fMSy3JOWYmSVFCjVnrK8ntAWig7uLt6Qbq1XSGk
 Content-Type: application/json
 
 {
@@ -24,10 +25,10 @@ Content-Type: application/json
   "validDays": 365,
   "mt": "1-1",
   "st": "1-1-1",
-  "name": "",
+  "name": "初级人员",
   "pic": "",
   "teachmode": "200002",
-  "users": "初级人员",
+  "users": "初级人员初级人员初级人员",
   "tags": "",
   "grade": "204001",
   "description": ""
@@ -43,4 +44,4 @@ Content-Type: application/json
 }
 
 ### 密码模式
-POST {{auth_host}}/auth/oauth/token?client_id=XcWebApp&client_secret=XcWebApp&grant_type=password&username=zhangsan&password=123
+POST {{auth_host}}/auth/oauth/token?client_id=XcWebApp&client_secret=XcWebApp&grant_type=password&username=t1&password=111111

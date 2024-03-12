@@ -9,6 +9,7 @@ import com.xuecheng.content.model.dto.EditCourseDto;
 import com.xuecheng.content.model.dto.QueryCourseParamsDto;
 import com.xuecheng.content.model.po.CourseBase;
 import com.xuecheng.content.service.CourseBaseService;
+import com.xuecheng.base.utils.SecurityUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.web.bind.annotation.*;
@@ -55,9 +56,8 @@ public class CourseBaseInfoController {
     @PostMapping
     @ApiOperation("新增课程")
     public CourseBaseInfoDto saveCourse(@RequestBody @Valid AddCourseDto addCourseDto){
-        //TODO 获取当前用户的机构id(实现单点登录之后)
-        Long companyId = 111L;
-        return courseBaseService.saveCourse(companyId,addCourseDto);
+        String companyId = SecurityUtil.getUser().getCompanyId();
+        return courseBaseService.saveCourse(Long.valueOf(companyId),addCourseDto);
     }
 
     /**
@@ -85,9 +85,8 @@ public class CourseBaseInfoController {
     @PutMapping
     @ApiOperation("修改课程")
     public CourseBaseInfoDto updateCourse(@RequestBody @Valid EditCourseDto editCourseDto){
-        //TODO 获取当前用户的机构id(实现单点登录之后)
-        Long companyId = 1232141425L;
-        return courseBaseService.updateCourse(companyId, editCourseDto);
+        String companyId = SecurityUtil.getUser().getCompanyId();
+        return courseBaseService.updateCourse(Long.valueOf(companyId), editCourseDto);
     }
 
     /**
@@ -101,9 +100,8 @@ public class CourseBaseInfoController {
     @ApiOperation("删除课程")
     @DeleteMapping("/{courseId}")
     public RestResponse deleteCourseBaseInfo(@PathVariable Long courseId){
-        //TODO 获取当前用户的机构id(实现单点登录之后)
-        Long companyId = 1232141425L;
-        courseBaseService.deleteCourseBaseInfo(companyId,courseId);
+        String companyId = SecurityUtil.getUser().getCompanyId();
+        courseBaseService.deleteCourseBaseInfo(Long.valueOf(companyId),courseId);
         return RestResponse.success();
     }
 }
