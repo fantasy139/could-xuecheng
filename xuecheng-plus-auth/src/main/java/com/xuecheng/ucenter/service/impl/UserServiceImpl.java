@@ -1,18 +1,17 @@
 package com.xuecheng.ucenter.service.impl;
 
 import com.alibaba.fastjson.JSON;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.xuecheng.ucenter.mapper.XcUserMapper;
-import com.xuecheng.ucenter.model.po.SecurityUser;
-import com.xuecheng.ucenter.model.po.XcUser;
+import com.xuecheng.ucenter.model.dto.AuthParamsDto;
+import com.xuecheng.ucenter.model.dto.XcUserExt;
+import com.xuecheng.ucenter.service.AuthService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
-import java.util.ArrayList;
 
 /**
  * @author fantasy
@@ -22,21 +21,32 @@ import java.util.ArrayList;
 @Component
 public class UserServiceImpl implements UserDetailsService {
 
-    @Resource
-    private XcUserMapper xcUserMapper;
+    @Autowired
+    private ApplicationContext applicationContext;
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // 查询数据库
-        XcUser user = xcUserMapper.selectOne(Wrappers.<XcUser>lambdaQuery().eq(XcUser::getUsername, username));
-        if (null == user){
-            return null;
+    public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
+
+        AuthParamsDto authParamsDto;
+        try {
+            authParamsDto = JSON.parseObject(s, AuthParamsDto.class);
+        } catch (Exception e) {
+            throw new RuntimeException("请求认证参数不符合要求");
         }
-        String password = user.getPassword();
-        user.setPassword(null);
-        String userString = JSON.toJSONString(user);
+
+        // 根据认证类型获取对应类型的bean
+        String beanName = authParamsDto.getAuthType() + "_authService";
+        AuthService authService = applicationContext.getBean(beanName, AuthService.class);
+        // 认证
+        XcUserExt xcUserExt = authService.execute(authParamsDto);
+
+        String password = xcUserExt.getPassword();
+        xcUserExt.setPassword(null);
+        String userString = JSON.toJSONString(xcUserExt);
+        String[] authorities = new String[]{"test"};
+
         UserDetails userDetails = User.withUsername(userString)
-                .password(password).authorities(new String[]{"test"}).build();
+                .password(password).authorities(authorities).build();
         return userDetails;
     }
 }
