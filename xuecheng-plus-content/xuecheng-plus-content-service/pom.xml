@@ -95,5 +95,11 @@
             <version>3.8.0</version>
         </dependency>
 
+        <!--认证相关-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-security</artifactId>
+        </dependency>
+
     </dependencies>
 </project>
