@@ -6,11 +6,14 @@ import com.xuecheng.ucenter.model.dto.XcUserExt;
 import com.xuecheng.ucenter.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 
 /**
@@ -40,13 +43,11 @@ public class UserServiceImpl implements UserDetailsService {
         // 认证
         XcUserExt xcUserExt = authService.execute(authParamsDto);
 
-        String password = xcUserExt.getPassword();
-        xcUserExt.setPassword(null);
         String userString = JSON.toJSONString(xcUserExt);
-        String[] authorities = new String[]{"test"};
+        List<String> permissionList = xcUserExt.getPermissionList();
 
         UserDetails userDetails = User.withUsername(userString)
-                .password(password).authorities(authorities).build();
+                .password(xcUserExt.getPassword()).authorities(permissionList.toArray(new String[0])).build();
         return userDetails;
     }
 }

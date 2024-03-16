@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * @author fantasy
@@ -38,6 +39,12 @@ public class UsernamePasswordServiceImpl implements AuthService {
 
         XcUserExt xcUserExt = new XcUserExt();
         BeanUtils.copyProperties(user, xcUserExt);
+        // 密码不放入令牌中
+        xcUserExt.setPassword(null);
+
+        // 查询出用户的权限并返回
+        List<String> permissionList = xcUserMapper.selectPermissionList(user.getId());
+        xcUserExt.setPermissionList(permissionList);
         return xcUserExt;
     }
 }
