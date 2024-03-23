@@ -1,8 +1,11 @@
 package com.xuecheng.content.api;
 
 import com.xuecheng.content.service.CoursePublishService;
+import com.xuecheng.content.util.SecurityUtil;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -32,8 +35,8 @@ public class CoursePublishController {
     @ResponseBody
     @PostMapping ("/{courseId}")
     public void coursePublish(@PathVariable("courseId") Long courseId){
-        Long companyId = 1232141425L;
-        coursePublishService.coursePublish(companyId, courseId);
+        String companyId = SecurityUtil.getUser().getCompanyId();
+        coursePublishService.coursePublish(Long.valueOf(companyId), courseId);
     }
 
 }
